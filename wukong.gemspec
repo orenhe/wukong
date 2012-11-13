@@ -221,6 +221,7 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<addressable>, [">= 0"])
       s.add_runtime_dependency(%q<htmlentities>, [">= 0"])
       s.add_runtime_dependency(%q<home_run>, [">= 0"])
+      s.add_runtime_dependency(%q<right_aws>, [">= 0"])
       s.add_development_dependency(%q<bundler>, ["~> 1.1"])
       s.add_development_dependency(%q<rake>, [">= 0"])
       s.add_development_dependency(%q<yard>, [">= 0.7"])
