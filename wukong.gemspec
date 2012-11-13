@@ -253,6 +253,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<yard>, [">= 0.7"])
     s.add_dependency(%q<rspec>, [">= 2.8"])
     s.add_dependency(%q<jeweler>, [">= 1.6"])
+    s.add_dependency(%q<right_aws>, [">= 0"])
   end
 end
 
