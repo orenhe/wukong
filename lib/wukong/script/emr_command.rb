@@ -10,6 +10,7 @@ Settings.define :emr_runner,           :description => 'Path to the elastic-mapr
 Settings.define :emr_root,             :description => 'S3 bucket and path to use as the base for Elastic MapReduce storage, organized by job name'
 Settings.define :emr_data_root,        :description => 'Optional '
 Settings.define :emr_bootstrap_script, :description => 'Bootstrap actions for Elastic Map Reduce machine provisioning', :default => EMR_CONFIG_DIR+'/emr_bootstrap.sh', :type => :filename, :finally => lambda{ Settings.emr_bootstrap_script = File.expand_path(Settings.emr_bootstrap_script) }
+Settings.define :bootstrap_scripts, :description => 'More bootstrap scripts', :default => [], :finally => lambda{  }
 Settings.define :emr_extra_args,       :description => 'kludge: allows you to stuff extra args into the elastic-mapreduce invocation', :type => Array, :wukong => true
 Settings.define :alive,                :description => 'Whether to keep machine running after job invocation', :type => :boolean
 #
@@ -28,6 +29,18 @@ module Wukong
   module EmrCommand
 
     def execute_emr_workflow
+      # Make all bootstrap scripts look the same for the rest of the
+      # code
+      Settings.bootstrap_scripts = Settings.bootstrap_scripts.map do |script|
+        base_name = script
+        rest = []
+        if script.is_a? Array
+          base_name = script[0]
+          rest = script[1..-1]
+        end
+        res = [ File.expand_path(base_name) ] + rest
+        res
+      end
       copy_script_to_cloud
       execute_emr_runner
     end
@@ -37,6 +50,9 @@ module Wukong
       S3Util.store(this_script_filename, mapper_s3_uri)
       S3Util.store(this_script_filename, reducer_s3_uri)
       S3Util.store(File.expand_path(Settings.emr_bootstrap_script), bootstrap_s3_uri)
+      Settings.bootstrap_scripts.each do |script|
+        S3Util.store(File.expand_path(script[0]), bootstrap_s3_script_uri(script[0]))
+      end
     end
 
     def copy_jars_to_cloud
@@ -58,12 +74,24 @@ module Wukong
       else
         command_args << "--create --name=#{job_name}"
         command_args << Settings.dashed_flag_for(:alive)
-        command_args << Settings.dashed_flags(:num_instances, [:instance_type, :slave_instance_type], :master_instance_type, :hadoop_version).join(' ')
+        # The new style of elastic-mapreduce cluster type flags
+        command_args << "--instance-group=master"
+        command_args << Settings.dashed_flags([:master_instance_type, :instance_type]).join(' ')
+        command_args << "--instance-count=1"
+        command_args << "--instance-group=core"
+        command_args << Settings.dashed_flags([:slave_instance_type, :instance_type], [:num_instances, :instance_count]).join(' ')
+        command_args << Settings.dashed_flags(:hadoop_version).join(' ')
+        command_args << Settings[:emr_extra_args] unless Settings[:emr_extra_args].blank?
         command_args << Settings.dashed_flags(:availability_zone, :key_pair, :key_pair_file).join(' ')
         command_args << "--bootstrap-action=#{bootstrap_s3_uri}"
+
+        Settings[:bootstrap_scripts].each do |script|
+          command_args << "--bootstrap-action=#{bootstrap_s3_script_uri(script[0])}"
+          command_args << "--args=#{script[1..-1].join(',')}" if script.size > 1
+        end
       end
       command_args << Settings.dashed_flags(:enable_debugging, :step_action, [:emr_runner_verbose, :verbose], [:emr_runner_debug, :debug]).join(' ')
-      command_args += emr_credentials
+      #command_args += emr_credentials
       command_args += [
         "--log-uri=#{log_s3_uri}",
         "--stream",
@@ -117,6 +145,12 @@ module Wukong
     end
     def bootstrap_s3_uri
       emr_s3_path(job_handle, 'bin', "emr_bootstrap.sh")
+    end
+    def bootstrap_s3_dir
+      emr_s3_path(job_handle, 'bin')
+    end
+    def bootstrap_s3_script_uri(script)
+      [bootstrap_s3_dir, File.basename(script)].join('/')
     end
     def wukong_libs_s3_uri
       emr_s3_path(job_handle, 'code', "wukong-libs.jar")
