@@ -58,6 +58,11 @@ module Wukong
           S3Util.store(File.expand_path(script[0]), bootstrap_s3_script_uri(script[0]))
         end
       end
+      if Settings.additional_files.size > 1
+        # Create a tar.gz archive
+        `tar czf #{job_name}.tar.gz #{Settings.additional_files.join(" ")}`
+        Settings.additional_files = [ "#{job_name}.tar.gz" ]
+      end
       Settings.additional_files.each do |file|
         unless file.start_with? "s3://"
           S3Util.store(File.expand_path(file), bootstrap_s3_script_uri(file))
@@ -113,7 +118,8 @@ module Wukong
         "--input=#{input_paths.join(",")} --output=#{output_path}",
       ]
       Settings[:additional_files].each do |file|
-        command_args << "--cache=#{bootstrap_s3_script_uri(file)}##{File.basename(file)}"
+        cache_cmd = file.end_with?(".tar.gz") ? "cache" : "cache-archive"
+        command_args << "--#{cache_cmd}=#{bootstrap_s3_script_uri(file)}##{File.basename(file)}"
       end
       # eg to specify zero reducers:
       # Settings[:emr_extra_args] = "--arg '-D mapred.reduce.tasks=0'"
