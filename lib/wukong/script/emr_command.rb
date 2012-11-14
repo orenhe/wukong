@@ -39,7 +39,8 @@ module Wukong
           base_name = script[0]
           rest = script[1..-1]
         end
-        res = [ File.expand_path(base_name) ] + rest
+        base_name = File.expand_path(base_name) unless base_name.start_with? 's3://'
+        res = [ base_name ] + rest
         res
       end
       copy_script_to_cloud
