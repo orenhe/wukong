@@ -51,12 +51,6 @@ module Wukong
       S3Util.store(this_script_filename, mapper_s3_uri)
       S3Util.store(this_script_filename, reducer_s3_uri)
       S3Util.store(File.expand_path(Settings.emr_bootstrap_script), bootstrap_s3_uri)
-      if Settings[:map_command]
-        S3Util.store(File.expand_path(Settings.map_command), bootstrap_s3_script_uri(Settings.map_command))
-      end
-      if Settings[:reduce_command]
-        S3Util.store(File.expand_path(Settings.reduce_command), bootstrap_s3_script_uri(Settings.reduce_command))
-      end
 
       Settings.bootstrap_scripts.each do |script|
         unless script.start_with? "s3://"
