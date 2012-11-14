@@ -102,9 +102,7 @@ module Wukong
 
 
       end
-      Settings[:additional_files].each do |file|
-        command_args << "--cache=#{bootstrap_s3_script_uri(file)}##{File.basename(file)}"
-      end
+
       command_args << Settings.dashed_flags(:enable_debugging, :step_action, [:emr_runner_verbose, :verbose], [:emr_runner_debug, :debug]).join(' ')
       #command_args += emr_credentials
       command_args += [
@@ -114,6 +112,9 @@ module Wukong
         "--reducer=#{Settings[:reduce_command] || reducer_s3_uri} ",
         "--input=#{input_paths.join(",")} --output=#{output_path}",
       ]
+      Settings[:additional_files].each do |file|
+        command_args << "--cache=#{bootstrap_s3_script_uri(file)}##{File.basename(file)}"
+      end
       # eg to specify zero reducers:
       # Settings[:emr_extra_args] = "--arg '-D mapred.reduce.tasks=0'"
       command_args += Settings[:emr_extra_args] unless Settings[:emr_extra_args].blank?
