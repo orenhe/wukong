@@ -53,7 +53,7 @@ module Wukong
       S3Util.store(File.expand_path(Settings.emr_bootstrap_script), bootstrap_s3_uri)
 
       Settings.bootstrap_scripts.each do |script|
-        unless script.start_with? "s3://"
+        unless script[0].start_with? "s3://"
           S3Util.store(File.expand_path(script[0]), bootstrap_s3_script_uri(script[0]))
         end
       end
