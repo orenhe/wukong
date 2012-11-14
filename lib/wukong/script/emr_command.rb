@@ -100,17 +100,18 @@ module Wukong
           command_args << "--args=#{script[1..-1].join(',')}" if script.size > 1
         end
 
-        Settings[:additional_files].each do |file|
-          command_args << "--cacheFile=#{bootstrap_s3_script_uri(file)}##{File.basename(file)}"
-        end
+
+      end
+      Settings[:additional_files].each do |file|
+        command_args << "--cacheFile=#{bootstrap_s3_script_uri(file)}##{File.basename(file)}"
       end
       command_args << Settings.dashed_flags(:enable_debugging, :step_action, [:emr_runner_verbose, :verbose], [:emr_runner_debug, :debug]).join(' ')
       #command_args += emr_credentials
       command_args += [
         "--log-uri=#{log_s3_uri}",
         "--stream",
-        "--mapper=#{mapper_s3_uri} ",
-        "--reducer=#{reducer_s3_uri} ",
+        "--mapper=#{Settings[:map_command] || mapper_s3_uri} ",
+        "--reducer=#{Settings[:reduce_command] || reducer_s3_uri} ",
         "--input=#{input_paths.join(",")} --output=#{output_path}",
       ]
       # eg to specify zero reducers:
