@@ -103,7 +103,7 @@ module Wukong
 
       end
       Settings[:additional_files].each do |file|
-        command_args << "--cacheFile=#{bootstrap_s3_script_uri(file)}##{File.basename(file)}"
+        command_args << "--cache=#{bootstrap_s3_script_uri(file)}##{File.basename(file)}"
       end
       command_args << Settings.dashed_flags(:enable_debugging, :step_action, [:emr_runner_verbose, :verbose], [:emr_runner_debug, :debug]).join(' ')
       #command_args += emr_credentials
