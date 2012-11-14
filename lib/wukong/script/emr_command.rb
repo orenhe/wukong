@@ -10,7 +10,8 @@ Settings.define :emr_runner,           :description => 'Path to the elastic-mapr
 Settings.define :emr_root,             :description => 'S3 bucket and path to use as the base for Elastic MapReduce storage, organized by job name'
 Settings.define :emr_data_root,        :description => 'Optional '
 Settings.define :emr_bootstrap_script, :description => 'Bootstrap actions for Elastic Map Reduce machine provisioning', :default => EMR_CONFIG_DIR+'/emr_bootstrap.sh', :type => :filename, :finally => lambda{ Settings.emr_bootstrap_script = File.expand_path(Settings.emr_bootstrap_script) }
-Settings.define :bootstrap_scripts, :description => 'More bootstrap scripts', :default => [], :finally => lambda{  }
+Settings.define :bootstrap_scripts, :description => 'More bootstrap scripts', :default => []
+Settings.define :additional_files, :description => 'Additional files to copy to each machine', :default => []
 Settings.define :emr_extra_args,       :description => 'kludge: allows you to stuff extra args into the elastic-mapreduce invocation', :type => Array, :wukong => true
 Settings.define :alive,                :description => 'Whether to keep machine running after job invocation', :type => :boolean
 #
@@ -50,8 +51,22 @@ module Wukong
       S3Util.store(this_script_filename, mapper_s3_uri)
       S3Util.store(this_script_filename, reducer_s3_uri)
       S3Util.store(File.expand_path(Settings.emr_bootstrap_script), bootstrap_s3_uri)
+      if Settings[:map_command]
+        S3Util.store(File.expand_path(Settings.map_command), bootstrap_s3_script_uri(Settings.map_command))
+      end
+      if Settings[:reduce_command]
+        S3Util.store(File.expand_path(Settings.reduce_command), bootstrap_s3_script_uri(Settings.reduce_command))
+      end
+
       Settings.bootstrap_scripts.each do |script|
-        S3Util.store(File.expand_path(script[0]), bootstrap_s3_script_uri(script[0]))
+        unless script.start_with? "s3://"
+          S3Util.store(File.expand_path(script[0]), bootstrap_s3_script_uri(script[0]))
+        end
+      end
+      Settings.additional_files.each do |file|
+        unless file.start_with? "s3://"
+          S3Util.store(File.expand_path(file), bootstrap_s3_script_uri(file))
+        end
       end
     end
 
@@ -88,6 +103,10 @@ module Wukong
         Settings[:bootstrap_scripts].each do |script|
           command_args << "--bootstrap-action=#{bootstrap_s3_script_uri(script[0])}"
           command_args << "--args=#{script[1..-1].join(',')}" if script.size > 1
+        end
+
+        Settings[:additional_files].each do |file|
+          command_args << "--cacheFile=#{bootstrap_s3_script_uri(file)}##{File.basename(file)}"
         end
       end
       command_args << Settings.dashed_flags(:enable_debugging, :step_action, [:emr_runner_verbose, :verbose], [:emr_runner_debug, :debug]).join(' ')
@@ -150,7 +169,11 @@ module Wukong
       emr_s3_path(job_handle, 'bin')
     end
     def bootstrap_s3_script_uri(script)
-      [bootstrap_s3_dir, File.basename(script)].join('/')
+      if script.start_with? "s3://"
+        script
+      else
+        [bootstrap_s3_dir, File.basename(script)].join('/')
+      end
     end
     def wukong_libs_s3_uri
       emr_s3_path(job_handle, 'code', "wukong-libs.jar")
