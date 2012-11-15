@@ -20,8 +20,12 @@ Settings.define :key_pair,             :description => "AWS Key pair name. If no
 Settings.define :instance_type,        :description => 'AWS instance type to use',                        :default => 'm1.small'
 Settings.define :master_instance_type, :description => 'Overrides the instance type for the master node', :finally => lambda{ Settings.master_instance_type ||= Settings.instance_type }
 Settings.define :jobflow,              :description => "ID of an existing EMR job flow. Wukong will create a new job flow"
-#
+# This happens upon require, which is after Settings.resolve! done in the
+# initialize method of Script. Hence, the file settings override commandline
+# settings, which is an odd behaviour. So we re-use command line arguments later.
 Settings.read(File.expand_path(EMR_CONFIG_DIR+'/emr.yaml'))
+Settings.use(:commandline)
+Settings.resolve!
 
 module Wukong
   #
