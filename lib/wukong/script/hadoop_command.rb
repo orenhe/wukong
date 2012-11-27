@@ -31,6 +31,7 @@ module Wukong
     Settings.define :min_split_size,         :jobconf => true, :description => 'mapred.min.split.size',                                  :wukong => true
     Settings.define :output_field_separator, :jobconf => true, :description => 'stream.map.output.field.separator',                      :wukong => true
     Settings.define :partition_fields,       :jobconf => true, :description => 'num.key.fields.for.partition',                           :wukong => true
+    Settings.define :partition_field_options,       :jobconf => true, :description => 'mapred.text.key.partitioner.options',                           :wukong => true
     Settings.define :reduce_tasks,           :jobconf => true, :description => 'mapred.reduce.tasks',                                    :wukong => true
     Settings.define :respect_exit_status,    :jobconf => true, :description => 'stream.non.zero.exit.is.failure',                        :wukong => true
     Settings.define :reuse_jvms,             :jobconf => true, :description => 'mapred.job.reuse.jvm.num.tasks',                         :wukong => true
@@ -89,6 +90,7 @@ module Wukong
       unless options[:partition_fields].blank?
         jobconf_options += [
           jobconf(:partition_fields),
+          jobconf(:partition_field_options),
           jobconf(:output_field_separator),
         ]
       end
