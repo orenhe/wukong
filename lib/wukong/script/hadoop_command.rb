@@ -87,7 +87,8 @@ module Wukong
       # If no reducer and no reduce_command, then skip the reduce phase
       options[:reduce_tasks] = 0 if (! reducer) && (! options[:reduce_command]) && (! options[:reduce_tasks])
       # Fields hadoop should use to distribute records to reducers
-      unless options[:partition_fields].blank?
+      unless options[:partition_fields].blank? # TODO: This if is useless since
+                                               # all are added below
         jobconf_options += [
           jobconf(:partition_fields),
           jobconf(:partition_field_options),
@@ -106,7 +107,7 @@ module Wukong
         :reduce_tasks,             :respect_exit_status,
         :reuse_jvms,               :timeout,
         :max_tracker_failures,     :max_map_attempts,
-        :max_reduce_attempts
+        :max_reduce_attempts,      :partition_field_options
       ].map{|opt| jobconf(opt)}
       jobconf_options.flatten.compact
     end
