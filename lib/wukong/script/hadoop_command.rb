@@ -118,7 +118,7 @@ module Wukong
         extra_str_args << %Q{-inputreader 'StreamXmlRecordReader,begin=<#{options.split_on_xml_tag}>,end=</#{options.split_on_xml_tag}>'}
       end
       extra_str_args   << ' -lazyOutput' if options[:noempty]  # don't create reduce file if no records
-      extra_str_args   << ' -partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner' unless options[:partition_fields].blank?
+      extra_str_args   << ' -partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner' unless (options[:partition_fields].blank? and options[:partition_field_options].blank? and options[:sort_fields].blank? and options[:output_field_separator].blank?)
       extra_str_args
     end
 
