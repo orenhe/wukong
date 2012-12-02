@@ -18,6 +18,7 @@ Settings.define :alive,                :description => 'Whether to keep machine 
 Settings.define :key_pair_file,        :description => 'AWS Key pair file',                               :type => :filename
 Settings.define :key_pair,             :description => "AWS Key pair name. If not specified, it's taken from key_pair_file's basename", :finally => lambda{ Settings.key_pair ||= File.basename(Settings.key_pair_file.to_s, '.pem') if Settings.key_pair_file }
 Settings.define :instance_type,        :description => 'AWS instance type to use',                        :default => 'm1.small'
+Settings.define :bid_price,        :description => 'Bid price in $ for slave instances'
 Settings.define :master_instance_type, :description => 'Overrides the instance type for the master node', :finally => lambda{ Settings.master_instance_type ||= Settings.instance_type }
 Settings.define :jobflow,              :description => "ID of an existing EMR job flow. Wukong will create a new job flow"
 # This happens upon require, which is after Settings.resolve! done in the
@@ -108,6 +109,7 @@ module Wukong
         command_args << "--instance-count=1"
         command_args << "--instance-group=core"
         command_args << Settings.dashed_flags([:slave_instance_type, :instance_type], [:num_instances, :instance_count]).join(' ')
+        command_args << Settings.dashed_flags(:bid_price).join(' ') if Settings.bid_price
         command_args << Settings.dashed_flags(:hadoop_version).join(' ')
         command_args << Settings[:emr_extra_args] unless Settings[:emr_extra_args].blank?
         command_args << Settings.dashed_flags(:availability_zone, :key_pair, :key_pair_file).join(' ')
