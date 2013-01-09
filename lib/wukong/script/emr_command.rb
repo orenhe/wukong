@@ -69,11 +69,11 @@ module Wukong
         # Create a tar archive - tar.gz created with tar czf is unreadable on
         # EMR boxes
         `tar cf #{job_name}.tar #{Settings.additional_files.join(" ")}`
-        if Settings.additional_files.find { |f| Settings[:map_command].start_with? f }
+        if Settings.additional_files.find { |f| (Settings[:map_command] || "").start_with? f }
           # Update map commands for the tar directory name
           Settings[:map_command] = "#{job_name}.tar/#{Settings[:map_command]}"
         end
-        if Settings.additional_files.find { |f| Settings[:reduce_command].start_with? f }
+        if Settings.additional_files.find { |f| (Settings[:reduce_command] || "").start_with? f }
           # Update map commands for the tar directory name
           Settings[:reduce_command] = "#{job_name}.tar/#{Settings[:reduce_command]}"
         end
