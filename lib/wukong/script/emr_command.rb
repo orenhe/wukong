@@ -23,6 +23,7 @@ Settings.define :ami_version,        :description => 'Version of the AMI that am
 Settings.define :hadoop_version,        :description => 'Version of Hadoop on the AMIs'
 Settings.define :master_instance_type, :description => 'Overrides the instance type for the master node', :finally => lambda{ Settings.master_instance_type ||= Settings.instance_type }
 Settings.define :jobflow,              :description => "ID of an existing EMR job flow. Wukong will create a new job flow"
+Settings.define :compression,              :description => "lzop to enable LZOP compression on output", :default => 'false'
 # This happens upon require, which is after Settings.resolve! done in the
 # initialize method of Script. Hence, the file settings override commandline
 # settings, which is an odd behaviour. So we re-use command line arguments later.
@@ -141,6 +142,7 @@ module Wukong
       end
       # eg to specify zero reducers:
       # Settings[:emr_extra_args] = "--arg '-D mapred.reduce.tasks=0'"
+      command_args += ['--arg -jobconf --arg mapred.output.compress=true --arg -jobconf --arg mapred.output.compression.codec=com.hadoop.compression.lzo.LzopCodec'] if Settings[:compression] == 'lzop'
       command_args += Settings[:emr_extra_args] unless Settings[:emr_extra_args].blank?
       command_args += hadoop_options_for_emr_runner
       Log.info 'Follow along at http://localhost:9000/job'
