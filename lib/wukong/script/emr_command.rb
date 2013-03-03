@@ -128,7 +128,7 @@ module Wukong
       end
 
       command_args << Settings.dashed_flags(:enable_debugging, :step_action, [:emr_runner_verbose, :verbose], [:emr_runner_debug, :debug]).join(' ')
-      #command_args += emr_credentials
+      command_args += emr_credentials
       command_args += [
         "--log-uri=#{log_s3_uri}",
         "--stream",
