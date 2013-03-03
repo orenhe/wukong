@@ -146,7 +146,16 @@ module Wukong
       command_args += Settings[:emr_extra_args] unless Settings[:emr_extra_args].blank?
       command_args += hadoop_options_for_emr_runner
       Log.info 'Follow along at http://localhost:9000/job'
-      execute_command!( File.expand_path(Settings.emr_runner), *command_args )
+
+      execute_command!( emr_runner_command, *command_args )
+    end
+
+    def emr_runner_command
+      if Settings.emr_runner.nil?
+        "elastic-mapreduce" # Not defined in YAML, trust the system PATH, as when gem is installed
+      else
+        Settings.emr_runner
+      end
     end
 
     def emr_credentials
